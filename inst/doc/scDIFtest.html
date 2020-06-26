@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+<meta name="date" content="2020-06-25" />
+
+<title>scDIFtest: Efficient DIF detection</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css" data-origin="pandoc">
+a.sourceLine { display: inline-block; line-height: 1.25; }
+a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
+a.sourceLine:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+code.sourceCode { white-space: pre-wrap; }
+a.sourceLine { text-indent: -1em; padding-left: 1em; }
+}
+pre.numberSource a.sourceLine
+  { position: relative; left: -4em; }
+pre.numberSource a.sourceLine::before
+  { content: attr(title);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; pointer-events: all; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {  }
+@media screen {
+a.sourceLine::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+<style type="text/css">
+  p.abstract{
+    text-align: center;
+    font-weight: bold;
+  }
+  div.abstract{
+    margin: auto;
+    width: 90%;
+  }
+</style>
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">scDIFtest: Efficient DIF detection</h1>
+<h4 class="author">Dries Debeer</h4>
+<address class="author_afil">
+ITEC, imec research group at KULeuven<br><h4 class="date">2020-06-25</h4>
+<div class="abstract">
+<p class="abstract">Abstract</p>
+This vignette, explains the installation of the <code>scDIFtest</code> package and provides an illustration of item-wise DIF-detection with the <code>scDIFtest</code>-function using a subset of the <code>SPISA</code> data set.
+</div>
+
+
+
+<div id="dif-detection-using-the-score-based-test-framework" class="section level2">
+<h2>DIF detection using the score-based test framework</h2>
+<p>The score-based <em>test</em> framework for parameter instability has been proposed for testing measurement invariance in measurement models. Until now, the focus was on (a) testing the invariance of all parameters simultaneously, or (b) on testing the invariance of a single parameter in the model. However in educational and psychological assessments, the appropriateness of each items is of interest. For instance, the detection of differential item function (DIF) plays an important role in validating new items. The <code>scDIFtest</code> package provides a user-friendly method for detecting DIF by automatically and efficiently applying the tests from the score-based test framework to the individual items in the assessment. The main function of the <code>scDIFtest</code> package is the <code>scDIFtest</code> function, which is a wrapper around the <code>strucchange::sctest</code>-function.</p>
+<p>To detect DIF with the <code>scDIFtest</code> package, first, the appropriate Item Response Theory (IRT) or Factor Analysis (FA) model should fitted using the <code>mirt</code> package. The <code>scDIFtest</code>-function can directly be used on the resulting <code>mirt</code>-object. Hence, in addition to the <code>scDIFtest</code>, the package <code>mirt</code> will typically also be loaded in the <code>R</code> session. For now, <code>scDIFtest</code> only works for IRT/FA models that were fitted using the <code>mirt</code> package, but we aim to extend this to other packages that fit IRT/FA models using maximum likelihood estimation.</p>
+</div>
+<div id="overview-of-the-method" class="section level2">
+<h2>Overview of the method</h2>
+<p>In order to fit the IRT model and analyze DIF with the <code>scDIFtest</code>, the following steps are necessary:</p>
+<ol style="list-style-type: decimal">
+<li>installation of the <code>R</code>-package(s)</li>
+<li>data preparation</li>
+<li>fitting the IRT Model by using either the <code>mirt</code> or <code>multipleGroup</code>-function implemented in the <code>mirt</code> package <span class="citation">Chalmers (2012)</span></li>
+<li>detecting DIF by using <code>scDIFtest</code> <span class="citation">Debeer (2020)</span></li>
+<li>interpreting the results</li>
+</ol>
+<p>In the sections that follow, these steps will be explained in detail.</p>
+</div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<p>The <code>scDIFtest</code> package is installed using the following commands:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">install.packages</span>(<span class="st">&quot;devtools&quot;</span>)</a>
+<a class="sourceLine" id="cb1-2" title="2">devtools<span class="op">::</span><span class="kw">install_github</span>(<span class="st">&quot;ddebeer/scDIFtest&quot;</span>)</a></code></pre></div>
+<p>Since, the <code>mirt</code> package <span class="citation">Chalmers (2012)</span> is required for fitting the IRT/FA model of interest, it should also be installed (using <code>install.packages(&quot;mirt&quot;)</code>).</p>
+</div>
+<div id="data-preparation" class="section level2">
+<h2>Data preparation</h2>
+<p>In this vignette, a subset of the <code>SPISA</code> data is used. This data is part of the <code>psychotree</code> package, it can be accessed when the <code>psychotree</code> package is installed. To load the <code>SPISA</code> dataset:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw">install.packages</span>(<span class="st">&quot;psychotree&quot;</span>, <span class="dt">quiet =</span> <span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="kw">data</span>(<span class="st">&quot;SPISA&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;psychotree&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">data</span>(<span class="st">&quot;SPISA&quot;</span>, <span class="dt">package =</span> <span class="st">&quot;psychotree&quot;</span>)</a></code></pre></div>
+<p>The SPISA data is a subsample from the general knowledge quiz “Studentenpisa” conducted online by the German weekly news magazine SPIEGEL <span class="citation">Trepte and Verbeet (2010)</span>. The data contain the quiz results from 45 questions as well as socio-demographic data for 1075 university students from Bavaria <span class="citation">Trepte and Verbeet (2010)</span>. Although there were 45 questions addressing different topics, this illustration is limited to the analysis of the nine science questions (items 37 - 45). To analyze the data with <code>mirt</code>, the responses are converted to a data frame.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">resp &lt;-<span class="st"> </span><span class="kw">as.data.frame</span>(SPISA<span class="op">$</span>spisa[,<span class="dv">37</span><span class="op">:</span><span class="dv">45</span>])</a></code></pre></div>
+<p>In addition to the responses, the SPISA data also contains five socio-demographic variables (i.e., person covariates):</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">summary</span>(SPISA[,<span class="dv">2</span><span class="op">:</span><span class="dv">6</span>])</a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt;     gender         age          semester   elite            spon    </span></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;  female:417   Min.   :18.0   2      :173   no :836   never    :303  </span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;  male  :658   1st Qu.:21.0   4      :123   yes:239   &lt;1/month :127  </span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;               Median :23.0   6      :116             1-3/month:107  </span></a>
+<a class="sourceLine" id="cb5-6" title="6"><span class="co">#&gt;               Mean   :23.1   1      :105             1/week   : 79  </span></a>
+<a class="sourceLine" id="cb5-7" title="7"><span class="co">#&gt;               3rd Qu.:25.0   5      : 99             2-3/week : 73  </span></a>
+<a class="sourceLine" id="cb5-8" title="8"><span class="co">#&gt;               Max.   :40.0   3      : 98             4-5/week : 60  </span></a>
+<a class="sourceLine" id="cb5-9" title="9"><span class="co">#&gt;                              (Other):361             daily    :326</span></a></code></pre></div>
+<p>In this illustration, we will try to detect DIF along the following three covariates:</p>
+<ol style="list-style-type: decimal">
+<li><code>age</code> of the student in years (numeric covariate)</li>
+<li><code>gender</code> of the student (unordered categorical covariate)</li>
+<li>and <code>spon</code>, which is the frequency of assessing the SPIEGEL ONline (SPON) magazine (ordered categorical covariate)</li>
+</ol>
+</div>
+<div id="fitting-the-irt-model-using-either-the-mirt-or-multiplegroup-function" class="section level2">
+<h2>Fitting the IRT model using either the <code>mirt</code> or <code>multipleGroup</code> function</h2>
+<p>It is important to note that, for the package to work, the parameters in the assumed IRT model need to be be estimated using either the <code>mirt</code> or the <code>multipleGroup</code> function from the <code>mirt</code>-package. The <code>multipleGroup</code> function can model impact between groups of persons, which is not possible with the <code>mirt</code> function. Modeling impact is important when the goal is to detect DIF <span class="citation">DeMars (2010)</span>. In this illustration, for instance, we test whether there is impact with respect to gender by comparing a model which allows ability differences between male and female students with a model that assumes there are no group difference in ability. The relative fit of these two models is compared, and the best fitting model is selected for the DIF analysis. The general idea is that we want to avoid (a) false cases of DIF detection that can be attributed to ability differences and (b) not detecting DIF that is masked due to not modeling ability differences.</p>
+<p>First the <code>mirt</code> package is loaded in the `R} session:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw">library</span>(mirt, <span class="dt">quietly =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<p>Then the two models are fit and compared. Note that in general we do not recommend using <code>verbose = FALSE</code>, but for this vignette it is more convenient.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">fit_2PL &lt;-<span class="st"> </span><span class="kw">mirt</span>(<span class="dt">data =</span> resp, </a>
+<a class="sourceLine" id="cb7-2" title="2">                <span class="dt">model =</span> <span class="dv">1</span>, </a>
+<a class="sourceLine" id="cb7-3" title="3">                <span class="dt">itemtype =</span> <span class="st">&quot;2PL&quot;</span>, </a>
+<a class="sourceLine" id="cb7-4" title="4">                <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb7-5" title="5">fit_multiGroup &lt;-<span class="st"> </span><span class="kw">multipleGroup</span>(</a>
+<a class="sourceLine" id="cb7-6" title="6">  <span class="dt">data =</span> resp, <span class="dt">model =</span> <span class="dv">1</span>,  </a>
+<a class="sourceLine" id="cb7-7" title="7">  <span class="dt">group =</span> SPISA<span class="op">$</span>gender,</a>
+<a class="sourceLine" id="cb7-8" title="8">  <span class="dt">invariance =</span> <span class="kw">c</span>(<span class="st">&quot;free_means&quot;</span>, </a>
+<a class="sourceLine" id="cb7-9" title="9">                 <span class="st">&quot;slopes&quot;</span>, </a>
+<a class="sourceLine" id="cb7-10" title="10">                 <span class="st">&quot;intercepts&quot;</span>, </a>
+<a class="sourceLine" id="cb7-11" title="11">                 <span class="st">&quot;free_var&quot;</span>),</a>
+<a class="sourceLine" id="cb7-12" title="12">  <span class="dt">verbose =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
+<p>The comparison of the two models with <code>anova</code> yields the following results:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw">anova</span>(fit_2PL, fit_multiGroup)</a>
+<a class="sourceLine" id="cb8-2" title="2"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb8-3" title="3"><span class="co">#&gt; Model 1: multipleGroup(data = resp, model = 1, group = SPISA$gender, invariance = c(&quot;free_means&quot;, </span></a>
+<a class="sourceLine" id="cb8-4" title="4"><span class="co">#&gt;     &quot;slopes&quot;, &quot;intercepts&quot;, &quot;free_var&quot;), verbose = FALSE)</span></a>
+<a class="sourceLine" id="cb8-5" title="5"><span class="co">#&gt; Model 2: mirt(data = resp, model = 1, itemtype = &quot;2PL&quot;, verbose = FALSE)</span></a>
+<a class="sourceLine" id="cb8-6" title="6"><span class="co">#&gt;        AIC     AICc    SABIC       HQ      BIC    logLik      X2  df   p</span></a>
+<a class="sourceLine" id="cb8-7" title="7"><span class="co">#&gt; 1 10139.62 10140.41 10175.69 10177.34 10239.22 -5049.808     NaN NaN NaN</span></a>
+<a class="sourceLine" id="cb8-8" title="8"><span class="co">#&gt; 2 10161.68 10162.33 10194.16 10195.64 10251.33 -5062.843 -26.069 509   1</span></a></code></pre></div>
+<p>The <code>multipleGroup</code> model with ability differences between male and female test takers best fits the data (lower AIC and BIC; small <span class="math inline">\(p\)</span>-value for the Likelihood Ratio Test). It seem like there are differences between male and female students with respect to the assessed science knowledge. Therefore, the <code>multipleGroup</code> model is used in the DIF detection analysis.</p>
+</div>
+<div id="detecting-dif-by-using-scdiftest" class="section level2">
+<h2>Detecting DIF by using scDIFtest</h2>
+<p>In the (sub)sections that follow, DIF is tested for three different covariates: <code>gender</code>, <code>age</code> and <code>spon</code> but only the DIF analysis for gender is explained in more detail. Yet the the used <code>R</code> commands are the same for any covariate. The interpretation is given for all of the covariates.</p>
+<div id="dif-by-gender" class="section level3">
+<h3>DIF by <code>gender</code></h3>
+<p>To test item wise DIF along gender, the <code>scDIFtest</code> function is used with the fitted model object and <code>gender</code> as the <code>DIF_covariate</code> argument. Note that the <code>scDIFtest</code> package has to be loaded first.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw">library</span>(scDIFtest)</a>
+<a class="sourceLine" id="cb9-2" title="2">DIF_gender &lt;-<span class="st"> </span><span class="kw">scDIFtest</span>(fit_multiGroup, <span class="dt">DIF_covariate =</span> SPISA<span class="op">$</span>gender) </a></code></pre></div>
+<p>The resulting object is assigned to <code>DIF_gender</code>. For a readable version of the results The <code>print</code> method is available. In addition, the <code>summary</code> method returns a summary of the results as a data frame.</p>
+</div>
+</div>
+<div id="interpreting-the-results" class="section level2">
+<h2>Interpreting the results</h2>
+<p>In the two subsections that follow, the results regarding the analyses of item wise DIF by <code>gender</code>, <code>age</code> and <code>spon</code> will be interpreted.</p>
+<div id="dif-by-gender-1" class="section level3">
+<h3>DIF by <code>gender</code></h3>
+<p>For the gender covariate, the print method gives the following results:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">DIF_gender</a>
+<a class="sourceLine" id="cb10-2" title="2"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb10-3" title="3"><span class="co">#&gt;  Score Based DIF-tests for 9 items</span></a>
+<a class="sourceLine" id="cb10-4" title="4"><span class="co">#&gt;  Person covariate: SPISA$gender</span></a>
+<a class="sourceLine" id="cb10-5" title="5"><span class="co">#&gt;  Test statistic type: Lagrange Multiplier Test for Unordered Groups</span></a>
+<a class="sourceLine" id="cb10-6" title="6"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb10-7" title="7"><span class="co">#&gt;    item_type n_est_pars       stat      p_value        p_fdr</span></a>
+<a class="sourceLine" id="cb10-8" title="8"><span class="co">#&gt; V1       2PL          2  0.4141020 8.129782e-01 9.146005e-01</span></a>
+<a class="sourceLine" id="cb10-9" title="9"><span class="co">#&gt; V2       2PL          2  8.3162505 1.563685e-02 4.691054e-02</span></a>
+<a class="sourceLine" id="cb10-10" title="10"><span class="co">#&gt; V3       2PL          2  4.8449033 8.870388e-02 1.995837e-01</span></a>
+<a class="sourceLine" id="cb10-11" title="11"><span class="co">#&gt; V4       2PL          2 32.7335352 7.798358e-08 7.018522e-07</span></a>
+<a class="sourceLine" id="cb10-12" title="12"><span class="co">#&gt; V5       2PL          2  3.2679379 1.951535e-01 3.512763e-01</span></a>
+<a class="sourceLine" id="cb10-13" title="13"><span class="co">#&gt; V6       2PL          2  0.4159221 8.122387e-01 9.146005e-01</span></a>
+<a class="sourceLine" id="cb10-14" title="14"><span class="co">#&gt; V7       2PL          2 30.3499936 2.567927e-07 1.155567e-06</span></a>
+<a class="sourceLine" id="cb10-15" title="15"><span class="co">#&gt; V8       2PL          2  0.1517182 9.269468e-01 9.269468e-01</span></a>
+<a class="sourceLine" id="cb10-16" title="16"><span class="co">#&gt; V9       2PL          2  0.5925442 7.435851e-01 9.146005e-01</span></a></code></pre></div>
+<p>First, in three lines some general information is given:</p>
+<ol style="list-style-type: decimal">
+<li>the type of test that is performed</li>
+<li>the covariate along which DIF is tested (in this case <code>gender</code> ) and</li>
+<li>the test statistic which is used, in this case the Lagrange-Multiplier-Test for unordered covariates, (<code>LMuo</code>; <span class="citation">Merkle and Zeileis (2013)</span>, <span class="citation">Merkle, Fan, and Zeileis (2014)</span>).</li>
+</ol>
+<p>After these three lines, a table with the main results is printed with one line for each item that was included in the DIF detection analysis. The columns of the table represent:</p>
+<ol style="list-style-type: decimal">
+<li>the name of each item (in this case <code>&quot;V1&quot;</code> - <code>&quot;V9&quot;</code>)</li>
+<li><code>item_type</code> the type of IRT model used for each item (in this case the two-Parameter Logistic Model (2PL))</li>
+<li><code>n_est_pars</code>: the number of estimated parameters for each item</li>
+<li><code>statistic</code>: the value for the statistic per item (in this case the <code>LMuo</code> statistic)</li>
+<li><code>p-value</code>: the <span class="math inline">\(p\)</span>-value per item</li>
+<li><code>p.fdr</code>: the False-Discovery-Rate corrected <span class="math inline">\(p\)</span>-value <span class="citation">Benjamini and Hochberg (1995)</span></li>
+</ol>
+<p>The printed output indicates that, when a significance level of <span class="math inline">\(.05\)</span> is used, DIF along <code>gender</code> is detected in item V4 and in item V7: these two items function differently, depending on the gender of the students.</p>
+<p>When one of more items are selected using the <code>item_selection</code> argument of the <code>print</code> method, the underlying <code>sctest</code> objects (or M-fluctuation tests) are printed.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw">print</span>(DIF_gender, <span class="dt">item_selection =</span> <span class="kw">c</span>(<span class="st">&quot;V4&quot;</span>, <span class="st">&quot;V7&quot;</span>))</a>
+<a class="sourceLine" id="cb11-2" title="2"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-3" title="3"><span class="co">#&gt;  DIF-test for V4</span></a>
+<a class="sourceLine" id="cb11-4" title="4"><span class="co">#&gt;  Person covariate: SPISA$gender</span></a>
+<a class="sourceLine" id="cb11-5" title="5"><span class="co">#&gt;  Test statistic type: Lagrange Multiplier Test for Unordered Groups</span></a>
+<a class="sourceLine" id="cb11-6" title="6"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-7" title="7"><span class="co">#&gt;  M-fluctuation test</span></a>
+<a class="sourceLine" id="cb11-8" title="8"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-9" title="9"><span class="co">#&gt; data:  resp</span></a>
+<a class="sourceLine" id="cb11-10" title="10"><span class="co">#&gt; f(efp) = 32.734, p-value = 7.798e-08</span></a>
+<a class="sourceLine" id="cb11-11" title="11"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-12" title="12"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-13" title="13"><span class="co">#&gt;  DIF-test for V7</span></a>
+<a class="sourceLine" id="cb11-14" title="14"><span class="co">#&gt;  Person covariate: SPISA$gender</span></a>
+<a class="sourceLine" id="cb11-15" title="15"><span class="co">#&gt;  Test statistic type: Lagrange Multiplier Test for Unordered Groups</span></a>
+<a class="sourceLine" id="cb11-16" title="16"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-17" title="17"><span class="co">#&gt;  M-fluctuation test</span></a>
+<a class="sourceLine" id="cb11-18" title="18"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb11-19" title="19"><span class="co">#&gt; data:  resp</span></a>
+<a class="sourceLine" id="cb11-20" title="20"><span class="co">#&gt; f(efp) = 30.35, p-value = 2.568e-07</span></a></code></pre></div>
+<p>Note that here the uncorrected <span class="math inline">\(p\)</span>-values are given.</p>
+</div>
+<div id="dif-by-age" class="section level3">
+<h3>DIF by <code>age</code></h3>
+<p>The results for the DIF-detection analysis with <code>age</code> as the covariate are:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">DIF_age &lt;-<span class="st"> </span><span class="kw">scDIFtest</span>(fit_multiGroup, <span class="dt">DIF_covariate =</span> SPISA<span class="op">$</span>age)</a>
+<a class="sourceLine" id="cb12-2" title="2">summary_age &lt;-<span class="st"> </span><span class="kw">summary</span>(DIF_age)</a>
+<a class="sourceLine" id="cb12-3" title="3">summary_age</a>
+<a class="sourceLine" id="cb12-4" title="4"><span class="co">#&gt;    item_type n_est_pars      stat     p_value      p_fdr</span></a>
+<a class="sourceLine" id="cb12-5" title="5"><span class="co">#&gt; V1       2PL          2 1.0593393 0.378630317 0.56794548</span></a>
+<a class="sourceLine" id="cb12-6" title="6"><span class="co">#&gt; V2       2PL          2 0.7508117 0.859974883 0.96747174</span></a>
+<a class="sourceLine" id="cb12-7" title="7"><span class="co">#&gt; V3       2PL          2 1.3579887 0.097556732 0.21950265</span></a>
+<a class="sourceLine" id="cb12-8" title="8"><span class="co">#&gt; V4       2PL          2 1.6092879 0.022393893 0.06718168</span></a>
+<a class="sourceLine" id="cb12-9" title="9"><span class="co">#&gt; V5       2PL          2 1.0936080 0.332120746 0.56794548</span></a>
+<a class="sourceLine" id="cb12-10" title="10"><span class="co">#&gt; V6       2PL          2 1.6830445 0.013808746 0.06213936</span></a>
+<a class="sourceLine" id="cb12-11" title="11"><span class="co">#&gt; V7       2PL          2 0.5720489 0.989797256 0.98979726</span></a>
+<a class="sourceLine" id="cb12-12" title="12"><span class="co">#&gt; V8       2PL          2 0.7729229 0.830878151 0.96747174</span></a>
+<a class="sourceLine" id="cb12-13" title="13"><span class="co">#&gt; V9       2PL          2 1.9126378 0.002656523 0.02390871</span></a></code></pre></div>
+<p>In this case, the Double Maximum Test for continuous numeric orderings (<code>dm</code>; <span class="citation">Merkle and Zeileis (2013)</span>, <span class="citation">Merkle, Fan, and Zeileis (2014)</span>) is used. The results indicate that DIF along <code>age</code> is detected in three items: V4 (<span class="math inline">\(p = 0.022\)</span>), V6 (<span class="math inline">\(p = 0.014\)</span>), and V9 ($ p = 0.003$). Note that the score-based framework has the power to detect DIF along numeric covariates, without assuming some functional form of the DIF.</p>
+</div>
+<div id="dif-by-spon" class="section level3">
+<h3>DIF by <code>spon</code></h3>
+<p>The results for the DIF-detection analysis with <code>spon</code> as the covariate are:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">DIF_spon &lt;-<span class="st"> </span><span class="kw">scDIFtest</span>(fit_multiGroup, <span class="dt">DIF_covariate =</span> SPISA<span class="op">$</span>spon)</a>
+<a class="sourceLine" id="cb13-2" title="2">DIF_spon</a>
+<a class="sourceLine" id="cb13-3" title="3"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb13-4" title="4"><span class="co">#&gt;  Score Based DIF-tests for 9 items</span></a>
+<a class="sourceLine" id="cb13-5" title="5"><span class="co">#&gt;  Person covariate: SPISA$spon</span></a>
+<a class="sourceLine" id="cb13-6" title="6"><span class="co">#&gt;  Test statistic type: Maximum Lagrange Multiplier Test for Ordered</span></a>
+<a class="sourceLine" id="cb13-7" title="7"><span class="co">#&gt;  Groups</span></a>
+<a class="sourceLine" id="cb13-8" title="8"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb13-9" title="9"><span class="co">#&gt;    item_type n_est_pars     stat    p_value     p_fdr</span></a>
+<a class="sourceLine" id="cb13-10" title="10"><span class="co">#&gt; V1       2PL          2 1.868941 0.77801026 0.8752615</span></a>
+<a class="sourceLine" id="cb13-11" title="11"><span class="co">#&gt; V2       2PL          2 6.342694 0.13796265 0.4506457</span></a>
+<a class="sourceLine" id="cb13-12" title="12"><span class="co">#&gt; V3       2PL          2 2.390256 0.66205817 0.8512176</span></a>
+<a class="sourceLine" id="cb13-13" title="13"><span class="co">#&gt; V4       2PL          2 3.597938 0.43002271 0.6450341</span></a>
+<a class="sourceLine" id="cb13-14" title="14"><span class="co">#&gt; V5       2PL          2 7.536444 0.08131494 0.4506457</span></a>
+<a class="sourceLine" id="cb13-15" title="15"><span class="co">#&gt; V6       2PL          2 4.847357 0.26196963 0.5297217</span></a>
+<a class="sourceLine" id="cb13-16" title="16"><span class="co">#&gt; V7       2PL          2 1.304980 0.89497831 0.8949783</span></a>
+<a class="sourceLine" id="cb13-17" title="17"><span class="co">#&gt; V8       2PL          2 6.174822 0.15021523 0.4506457</span></a>
+<a class="sourceLine" id="cb13-18" title="18"><span class="co">#&gt; V9       2PL          2 4.553582 0.29428984 0.5297217</span></a></code></pre></div>
+<p>In this case, the maximum Lagrange-Multiplier-Test (<code>maxLMO</code>; <span class="citation">Merkle and Zeileis (2013)</span>, <span class="citation">Merkle, Fan, and Zeileis (2014)</span>) is used. Since all tests result in large <span class="math inline">\(p\)</span>-values, we conclude that no DIF was detected along the <code>spon</code> covariate.</p>
+</div>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p><code>scDIFtest</code> is a user-friendly and efficient wrapper around the <code>sctest</code> function of the <code>strucchange</code> package. <code>scDIFtest</code> can be used to detect item-wise DIF, along both categorical and continuous <em>DIF covariates</em>. Note however, that the functionality is compatible with IRT models fit using the <code>mirt</code> package only. For now.</p>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-Yoav">
+<p>Benjamini, Yoav, and Yosef Hochberg. 1995. “Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing.” <em>Journal of the Royal Statistical Society. Series B (Methodological)</em> 57 (1): 289–300.</p>
+</div>
+<div id="ref-Chalmers">
+<p>Chalmers, R. Philip. 2012. “mirt: A Multidimensional Item Response Theory Package for the R Environment.” <em>Journal of Statistical Software</em> 48 (6): 1–29. <a href="https://doi.org/10.18637/jss.v048.i06">https://doi.org/10.18637/jss.v048.i06</a>.</p>
+</div>
+<div id="ref-Debeer">
+<p>Debeer, Dries. 2020. <em>ScDIFtest: Item-Wise Score-Based Dif Tests</em>.</p>
+</div>
+<div id="ref-DeMars">
+<p>DeMars, Christine E. 2010. “Type I Error Inflation for Detecting Dif in the Presence of Impact.” <em>Educational and Psychological Measurement</em> 70 (6): 961–72. <a href="https://doi.org/10.1177/0013164410366691">https://doi.org/10.1177/0013164410366691</a>.</p>
+</div>
+<div id="ref-Merkle2014">
+<p>Merkle, Edgar C, Jinyan Fan, and Achim Zeileis. 2014. “Testing for Measurement Invariance with Respect to an Ordinal Variable.” <em>Psychometrika</em> 79 (4): 569–84.</p>
+</div>
+<div id="ref-Merkle2013">
+<p>Merkle, Edgar C, and Achim Zeileis. 2013. “Tests of Measurement Invariance Without Subgroups: A Generalization of Classical Methods.” <em>Psychometrika</em> 78 (1): 59–82.</p>
+</div>
+<div id="ref-Spisa">
+<p>Trepte, Sabine, and Markus Verbeet, eds. 2010. <em>Allgemeinbildung in Deutschland - Erkenntnisse Aus Dem SPIEGEL Studentenpisa-Test</em>. Wiesbaden: VS Verlag.</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

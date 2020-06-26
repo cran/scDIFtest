@@ -1,0 +1,16 @@
+245d750627b8f94625cf4d2d709a83c0 *DESCRIPTION
+15ccc4a0f256669e36167384a2f63c0b *NAMESPACE
+7e2c0bfc58a96aad798aa375022428db *R/scDIFtest-Methods.R
+5b7c01060680e4ef217bdf0cb4afb077 *R/scDIFtest.R
+9510f442d8d0081a071ddde3c24bc682 *build/vignette.rds
+f9cf3ac0aafa962c9460b01b6ba2a60c *inst/WORDLIST
+e7b00b193f44a67d2125a71b6a9dd583 *inst/doc/scDIFtest.R
+175642b9d5083c19cd360ca6354a0c74 *inst/doc/scDIFtest.Rmd
+43f7e537cca6a3c7150822b0628f1570 *inst/doc/scDIFtest.html
+9937a1cf9aa16b6e0248de4b7338196b *man/scDIFtest-Methods.Rd
+719fdf4ed185595cae1f0c4ee95e530d *man/scDIFtest.Rd
+c5191523960683467cb15cba730cfec1 *tests/scDIFtest.R
+fef0ffab887d4838a8877a8aae342f1f *tests/testthat.R
+605bcf6437650935bce8f121da843f9e *tests/testthat/test_scDIFtest.R
+a90e807a813013e17a4eb26b9cb5211c *vignettes/References.bib
+175642b9d5083c19cd360ca6354a0c74 *vignettes/scDIFtest.Rmd
