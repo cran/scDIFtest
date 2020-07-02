@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
 
-<meta name="date" content="2020-06-25" />
+<meta name="date" content="2020-07-01" />
 
 <title>scDIFtest: Efficient DIF detection</title>
 
@@ -311,7 +311,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">scDIFtest: Efficient DIF detection</h1>
 <h4 class="author">Dries Debeer</h4>
 <address class="author_afil">
-ITEC, imec research group at KULeuven<br><h4 class="date">2020-06-25</h4>
+ITEC, imec research group at KULeuven<br><h4 class="date">2020-07-01</h4>
 <div class="abstract">
 <p class="abstract">Abstract</p>
 This vignette, explains the installation of the <code>scDIFtest</code> package and provides an illustration of item-wise DIF-detection with the <code>scDIFtest</code>-function using a subset of the <code>SPISA</code> data set.
@@ -499,15 +499,15 @@ This vignette, explains the installation of the <code>scDIFtest</code> package a
 <a class="sourceLine" id="cb13-7" title="7"><span class="co">#&gt;  Groups</span></a>
 <a class="sourceLine" id="cb13-8" title="8"><span class="co">#&gt; </span></a>
 <a class="sourceLine" id="cb13-9" title="9"><span class="co">#&gt;    item_type n_est_pars     stat    p_value     p_fdr</span></a>
-<a class="sourceLine" id="cb13-10" title="10"><span class="co">#&gt; V1       2PL          2 1.868941 0.77801026 0.8752615</span></a>
-<a class="sourceLine" id="cb13-11" title="11"><span class="co">#&gt; V2       2PL          2 6.342694 0.13796265 0.4506457</span></a>
-<a class="sourceLine" id="cb13-12" title="12"><span class="co">#&gt; V3       2PL          2 2.390256 0.66205817 0.8512176</span></a>
-<a class="sourceLine" id="cb13-13" title="13"><span class="co">#&gt; V4       2PL          2 3.597938 0.43002271 0.6450341</span></a>
-<a class="sourceLine" id="cb13-14" title="14"><span class="co">#&gt; V5       2PL          2 7.536444 0.08131494 0.4506457</span></a>
-<a class="sourceLine" id="cb13-15" title="15"><span class="co">#&gt; V6       2PL          2 4.847357 0.26196963 0.5297217</span></a>
-<a class="sourceLine" id="cb13-16" title="16"><span class="co">#&gt; V7       2PL          2 1.304980 0.89497831 0.8949783</span></a>
-<a class="sourceLine" id="cb13-17" title="17"><span class="co">#&gt; V8       2PL          2 6.174822 0.15021523 0.4506457</span></a>
-<a class="sourceLine" id="cb13-18" title="18"><span class="co">#&gt; V9       2PL          2 4.553582 0.29428984 0.5297217</span></a></code></pre></div>
+<a class="sourceLine" id="cb13-10" title="10"><span class="co">#&gt; V1       2PL          2 1.868941 0.77865040 0.8759817</span></a>
+<a class="sourceLine" id="cb13-11" title="11"><span class="co">#&gt; V2       2PL          2 6.342694 0.13831369 0.4507635</span></a>
+<a class="sourceLine" id="cb13-12" title="12"><span class="co">#&gt; V3       2PL          2 2.390256 0.66339331 0.8529343</span></a>
+<a class="sourceLine" id="cb13-13" title="13"><span class="co">#&gt; V4       2PL          2 3.597938 0.43124151 0.6468623</span></a>
+<a class="sourceLine" id="cb13-14" title="14"><span class="co">#&gt; V5       2PL          2 7.536444 0.08292608 0.4507635</span></a>
+<a class="sourceLine" id="cb13-15" title="15"><span class="co">#&gt; V6       2PL          2 4.847357 0.26086019 0.5319609</span></a>
+<a class="sourceLine" id="cb13-16" title="16"><span class="co">#&gt; V7       2PL          2 1.304980 0.89473667 0.8947367</span></a>
+<a class="sourceLine" id="cb13-17" title="17"><span class="co">#&gt; V8       2PL          2 6.174822 0.15025448 0.4507635</span></a>
+<a class="sourceLine" id="cb13-18" title="18"><span class="co">#&gt; V9       2PL          2 4.553582 0.29553382 0.5319609</span></a></code></pre></div>
 <p>In this case, the maximum Lagrange-Multiplier-Test (<code>maxLMO</code>; <span class="citation">Merkle and Zeileis (2013)</span>, <span class="citation">Merkle, Fan, and Zeileis (2014)</span>) is used. Since all tests result in large <span class="math inline">\(p\)</span>-values, we conclude that no DIF was detected along the <code>spon</code> covariate.</p>
 </div>
 </div>
